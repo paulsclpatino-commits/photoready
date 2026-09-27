@@ -345,7 +345,7 @@ input[type=color] { width: 100%; height: 32px; border: 1px solid var(--line); bo
       <h3 id="modalTitle">Exported</h3>
       <button class="btn small" type="button" id="closeModal">Close</button>
     </div>
-    <p class="note">Files download automatically. If nothing downloaded, use the Save link, or right-click / long-press an image and choose Save Image.</p>
+    <p class="note">Your file should save automatically. If it didn't, use the Save button, or right-click / long-press the image and choose Save Image.</p>
     <div class="results" id="results"></div>
   </div>
 </div>
@@ -1050,11 +1050,25 @@ async function doExport(list, kind) {
   if (!results.length) return;
   const box = $('results');
   box.innerHTML = '';
+  // Inside the claude.ai viewer, files go through its save prompt; elsewhere a normal download.
+  let dl = null;
+  try { dl = window.claude && window.claude.use ? await window.claude.use('downloads') : null; } catch (e) { dl = null; }
+  const offer = async (r, btn) => {
+    try {
+      await dl.save({ filename: r.name, data: r.blob });
+      if (btn) btn.textContent = 'Saved';
+    } catch (err) {
+      const why = { declined: 'Save cancelled.', rate_limited: 'Finish the open save prompt first.' }[err && err.code];
+      toast(why || 'Saving isn\'t available here. Right-click or long-press the image to save it.');
+    }
+  };
   results.forEach((r) => {
     const url = URL.createObjectURL(r.blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = r.name;
-    try { document.body.appendChild(a); a.click(); a.remove(); } catch (e) { /* download blocked; Save link below */ }
+    if (!dl) {
+      const a = document.createElement('a');
+      a.href = url; a.download = r.name;
+      try { document.body.appendChild(a); a.click(); a.remove(); } catch (e) { /* blocked; Save link below */ }
+    }
     const div = document.createElement('div');
     div.className = 'result';
     div.innerHTML = `<div class="img"><img alt=""></div><div class="meta"></div>`;
@@ -1062,11 +1076,20 @@ async function doExport(list, kind) {
     div.querySelector('img').alt = r.name;
     const meta = div.querySelector('.meta');
     meta.textContent = `${r.name} · ${r.meta} `;
-    const save = document.createElement('a');
-    save.href = url; save.download = r.name; save.textContent = 'Save'; save.style.color = 'var(--accent)';
+    let save;
+    if (dl) {
+      save = document.createElement('button');
+      save.type = 'button'; save.className = 'btn small'; save.textContent = 'Save file';
+      save.addEventListener('click', () => offer(r, save));
+    } else {
+      save = document.createElement('a');
+      save.href = url; save.download = r.name; save.textContent = 'Save'; save.style.color = 'var(--accent)';
+    }
     meta.appendChild(save);
     box.appendChild(div);
+    r.btn = save;
   });
+  if (dl && results.length === 1) offer(results[0], results[0].btn);
   $('modalTitle').textContent = results.length === 1 ? 'Exported 1 file' : `Exported ${results.length} files`;
   $('modal').hidden = false;
   $('toast').hidden = true;
