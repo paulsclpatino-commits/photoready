@@ -4,7 +4,7 @@ A single-page tool that turns photos into 1-color, screen-print-ready art at an 
 
 Open `index.html` in a browser (or host it on GitHub Pages). Nothing is uploaded; all processing happens in the browser.
 
-- **Size**: circle (button/patch/print diameters) or rectangle (pocket, sleeve, front, back), in inches or mm, 150–600 DPI, optional bleed.
+- **Size**: original (keeps the photo's own proportions; set width or height), circle (button/patch/print diameters) or rectangle (pocket, sleeve, front, back), in inches or mm, 150–600 DPI, optional bleed.
 - **Position**: drag to move, scroll to zoom, rotate, mirror, fill/fit.
 - **Tone**: brightness, contrast, midtones, threshold, auto threshold (Otsu), invert.
 - **Screen**: gritty grain, hard threshold, Floyd–Steinberg, Atkinson, ordered, halftone dots (LPI + angle), line screen. Dot size keeps the smallest dot big enough to hold on the mesh; clean-up drops lone specks and fills pinholes.
